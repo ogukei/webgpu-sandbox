@@ -1,0 +1,4 @@
+[workspace]
+members = [
+    "webgpu-sandbox-web",
+]

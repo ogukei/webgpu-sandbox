@@ -1,0 +1,5 @@
+# https://rustwasm.github.io/docs/wasm-bindgen/web-sys/unstable-apis.html
+[build]
+rustflags = [
+  "--cfg=web_sys_unstable_apis",
+]

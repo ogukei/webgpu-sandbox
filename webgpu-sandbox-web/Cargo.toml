@@ -1,0 +1,30 @@
+[package]
+name = "webgpu-sandbox-web"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.83"
+wasm-bindgen-futures = "*"
+js-sys = "*"
+
+[dependencies.web-sys]
+version = "0.3.60"
+features = [
+  'Document',
+  'Element',
+  'HtmlElement',
+  'Node',
+  'Window',
+  'Navigator',
+  'WorkerGlobalScope',
+  'WorkerNavigator',
+  'Gpu',
+  'GpuAdapter',
+  'GpuDevice',
+  'GpuSupportedFeatures',
+  'console',
+]
