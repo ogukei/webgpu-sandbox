@@ -52,3 +52,11 @@ https://stackoverflow.com/a/72495310
 ```
 npm run serve
 ```
+
+## Misc
+Rust Analyzer settings on VSCode settings.json
+```
+    "rust-analyzer.server.extraEnv": {
+        "RUSTFLAGS": "--cfg=web_sys_unstable_apis"
+    }
+```

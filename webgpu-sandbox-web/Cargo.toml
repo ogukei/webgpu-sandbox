@@ -26,5 +26,9 @@ features = [
   'GpuAdapter',
   'GpuDevice',
   'GpuSupportedFeatures',
+  'GpuCanvasContext',
+  'GpuCanvasConfiguration',
+  'GpuTextureFormat',
+  'HtmlCanvasElement',
   'console',
 ]
