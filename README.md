@@ -30,25 +30,35 @@ Install wasm-pack via https://rustwasm.github.io/wasm-pack/
 npm run build
 ```
 
-## Run
+## Setup to Run
 
+### macOS
+
+You will need the Chrome above version 102. Once installed, it is required to configure Unsafe WebGPU feature enabled via `about:flags`.
+
+```
+brew tap homebrew/cask-versions
+brew install --cask google-chrome-dev
+```
+
+### Linux
 Since WebGPU Origin Trial: 94 to 109, you will need the specific version of Chrome.
 
 https://chromestatus.com/feature/6213121689518080
 
-1. Install Chrome 108 from the link below.
+Install Chrome 108 from the link below.
 
 https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_108.0.5359.124-1_amd64.deb
 
 ([Note](https://stackoverflow.com/a/59469945))
 
-2. Launch Chrome by running the following command.
+Launch Chrome by running the following command.
 ```
 google-chrome --enable-unsafe-webgpu --enable-features=Vulkan
 ```
 https://stackoverflow.com/a/72495310
 
-3. Launch dev server
+## Run
 ```
 npm run serve
 ```
