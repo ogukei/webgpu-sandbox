@@ -55,6 +55,7 @@ features = [
   'GpuQueue',
   'GpuCommandBuffer',
   'GpuMultisampleState',
+  'gpu_texture_usage',
   'HtmlCanvasElement',
   'console',
 ]

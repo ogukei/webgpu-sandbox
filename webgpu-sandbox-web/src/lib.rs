@@ -29,6 +29,7 @@ use web_sys::{
     GpuColorDict,
     GpuMultisampleState,
     GpuTextureDescriptor,
+    gpu_texture_usage,
 };
 
 async fn main() -> Result<(), JsValue> {
@@ -47,7 +48,16 @@ async fn main() -> Result<(), JsValue> {
     let context = canvas.get_context("webgpu").unwrap().unwrap();
     let context: GpuCanvasContext = context.unchecked_into();
     console_log!("context acquired");
-
+    // size 
+    let device_pixel_ratio = window.device_pixel_ratio();
+    let width = canvas.client_width() as f64 * device_pixel_ratio;
+    let height = canvas.client_height() as f64 * device_pixel_ratio;
+    let presentation_size: Vec<JsValue> = vec![width, height].into_iter().map(Into::into).collect();
+    let presentation_size = presentation_size.into_iter().collect::<js_sys::Array>();
+    // configure canvas size
+    canvas.set_width(width as u32);
+    canvas.set_height(height as u32);
+    // format
     let presentation_format = gpu.get_preferred_canvas_format();
     let mut canvas_configuration = GpuCanvasConfiguration::new(&device, presentation_format);
     canvas_configuration.alpha_mode(GpuCanvasAlphaMode::Opaque);
@@ -98,19 +108,32 @@ fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
     primitive_state.topology(GpuPrimitiveTopology::TriangleList);
     render_descriptor.primitive(&primitive_state);
 
+    // multisample
+    let sample_count = 4;
+    let mut multisample_state = GpuMultisampleState::new();
+    multisample_state.count(sample_count);
+    render_descriptor.multisample(&multisample_state);
     // render
     let render_pipeline = device.create_render_pipeline(&render_descriptor);
 
-    // frame
-    let command_encoder = device.create_command_encoder();
-    let texture = context.get_current_texture();
+    // texture
+    let usage = gpu_texture_usage::RENDER_ATTACHMENT;
+    let mut texture_descriptor = GpuTextureDescriptor::new(presentation_format, &presentation_size, usage);
+    texture_descriptor.sample_count(sample_count);
+    let texture = device.create_texture(&texture_descriptor);
     let texture_view = texture.create_view();
 
+    // frame
+    let command_encoder = device.create_command_encoder();
+    let context_texture_view = context.get_current_texture().create_view();
+
     // render pass
-    let mut color_attachment = GpuRenderPassColorAttachment::new(GpuLoadOp::Clear, GpuStoreOp::Store, &texture_view);
+    let mut color_attachment = GpuRenderPassColorAttachment::new(
+        GpuLoadOp::Clear, GpuStoreOp::Discard, &texture_view);
     let clear_color = GpuColorDict::new(1.0, 0.0, 0.0, 0.0);
     let clear_color: JsValue = clear_color.into();
     color_attachment.clear_value(&clear_color);
+    color_attachment.resolve_target(&context_texture_view);
     let color_attachments: Vec<JsValue> = vec![
         color_attachment.into(),
     ];
