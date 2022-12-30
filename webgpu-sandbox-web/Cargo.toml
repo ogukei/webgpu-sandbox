@@ -56,6 +56,12 @@ features = [
   'GpuCommandBuffer',
   'GpuMultisampleState',
   'gpu_texture_usage',
+  'GpuBuffer',
+  'GpuBufferDescriptor',
+  'gpu_buffer_usage',
+  'GpuVertexBufferLayout',
+  'GpuVertexAttribute',
+  'GpuVertexFormat',
   'HtmlCanvasElement',
   'console',
 ]

@@ -29,7 +29,12 @@ use web_sys::{
     GpuColorDict,
     GpuMultisampleState,
     GpuTextureDescriptor,
-    gpu_texture_usage,
+    gpu_texture_usage, 
+    GpuBufferDescriptor,
+    gpu_buffer_usage,
+    GpuVertexBufferLayout,
+    GpuVertexAttribute,
+    GpuVertexFormat,
 };
 
 async fn main() -> Result<(), JsValue> {
@@ -68,14 +73,11 @@ async fn main() -> Result<(), JsValue> {
     // https://github.com/austinEng/webgpu-samples/blob/main/src/sample/helloTriangle/main.ts
     let code = "
 @vertex
-fn vert_main(@builtin(vertex_index) index: u32) -> @builtin(position) vec4<f32> {
-    var vertices = array<vec2<f32>, 3>(
-        vec2(0.0, 0.5),
-        vec2(-0.5, -0.5),
-        vec2(0.5, -0.5)
-    );
-    var vert = vertices[index];
-    return vec4<f32>(vert.x, vert.y, 0.0, 1.0);
+fn vert_main(
+    @builtin(vertex_index) index: u32,
+    @location(0) position: vec3<f32>
+) -> @builtin(position) vec4<f32> {
+    return vec4<f32>(position.x, position.y, position.z, 1.0);
 }
 
 @fragment
@@ -87,6 +89,21 @@ fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
     let shader_module = device.create_shader_module(&shader_descriptor);
     console_log!("shader module acquired");
 
+    // vertices
+    let mut vertex_buffer_descriptor = GpuBufferDescriptor::new(
+        (std::mem::size_of::<f32>() * 9) as f64,
+        gpu_buffer_usage::VERTEX);
+    vertex_buffer_descriptor.mapped_at_creation(true);
+    let vertex_buffer = device.create_buffer(&vertex_buffer_descriptor);
+    let vertex_array = js_sys::Float32Array::new(&vertex_buffer.get_mapped_range());
+    let vertices: Vec<f32> = vec![
+        0.0, 0.5, 0.0,
+        -0.5, -0.5, 0.0,
+        0.5, -0.5, 0.0,
+    ];
+    vertex_array.copy_from(&vertices);
+    vertex_buffer.unmap();
+
     // layout
     let binds: Vec<JsValue> = vec![];
     let binds = binds.into_iter().collect::<js_sys::Array>();
@@ -94,7 +111,19 @@ fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
     let layout = device.create_pipeline_layout(&layout_descriptor);
     
     // vertex
-    let vertex_state = GpuVertexState::new("vert_main", &shader_module);
+    let mut vertex_state = GpuVertexState::new("vert_main", &shader_module);
+    // attributes
+    let vertex_buffer_attribute = GpuVertexAttribute::new(GpuVertexFormat::Float32x3, 0.0, 0);
+    let vertex_buffer_attributes = vec![vertex_buffer_attribute];
+    let vertex_buffer_attributes = vertex_buffer_attributes.into_iter().collect::<js_sys::Array>();
+    // layouts
+    let vertex_buffer_layout = GpuVertexBufferLayout::new(
+        (std::mem::size_of::<f32>() * 3) as f64,
+        &vertex_buffer_attributes);
+    let vertex_buffer_layouts: Vec<JsValue> = vec![vertex_buffer_layout.into()];
+    let vertex_buffer_layouts = vertex_buffer_layouts.into_iter().collect::<js_sys::Array>();
+    vertex_state.buffers(&vertex_buffer_layouts);
+
     // init
     let mut render_descriptor = GpuRenderPipelineDescriptor::new(&layout, &vertex_state);
     // fragment
@@ -143,6 +172,7 @@ fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
     // render pass encoder
     let render_pass_encoder = command_encoder.begin_render_pass(&render_pass_descriptor);
     render_pass_encoder.set_pipeline(&render_pipeline);
+    render_pass_encoder.set_vertex_buffer(0, &vertex_buffer);
     render_pass_encoder.draw(3);
     render_pass_encoder.end();
 
