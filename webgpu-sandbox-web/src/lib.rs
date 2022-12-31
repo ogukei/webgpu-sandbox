@@ -1,6 +1,10 @@
 
 mod console;
 mod global;
+mod animation;
+mod scene;
+
+use std::sync::Mutex;
 
 use nalgebra_glm as glm;
 
@@ -46,7 +50,7 @@ use web_sys::{
     GpuBufferBindingType,
     GpuDepthStencilState,
     GpuCompareFunction,
-    GpuRenderPassDepthStencilAttachment,
+    GpuRenderPassDepthStencilAttachment, GpuBuffer,
 };
 
 async fn main() -> Result<(), JsValue> {
@@ -90,18 +94,34 @@ struct Uniforms {
 }
 @binding(0) @group(0) var<uniform> uniforms: Uniforms;
 
+struct VertexOut {
+    @builtin(position) position: vec4<f32>,
+    @location(0) normal: vec3<f32>,
+}
+
 @vertex
 fn vert_main(
     @builtin(vertex_index) index: u32,
     @location(0) position: vec3<f32>
-) -> @builtin(position) vec4<f32> {
-    var p = vec4<f32>(position.x, position.y, position.z, 1.0);
-    return uniforms.projection_view * p;
+) -> VertexOut {
+    var p = vec4<f32>(position, 1.0);
+    var out: VertexOut;
+    out.position = uniforms.projection_view * p;
+    out.normal = position;
+    return out;
 }
 
 @fragment
-fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
-    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+fn frag_main(
+    @builtin(position) coord_in: vec4<f32>,
+    @location(0) normal: vec3<f32>
+) -> @location(0) vec4<f32> {
+    var light = vec3<f32>(0.5, 3.0, -0.25);
+    var l = normalize(light);
+    var n = normalize(normal);
+    var d = dot(n, l);
+    var intensity = vec3<f32>(max(d, 0.3));
+    return vec4<f32>(intensity, 1.0);
 }
 ";
     let shader_descriptor = GpuShaderModuleDescriptor::new(code);
@@ -246,56 +266,67 @@ fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
     depth_texture_descriptor.sample_count(sample_count);
     let depth_texture = device.create_texture(&depth_texture_descriptor);
 
-    // frame
-    let command_encoder = device.create_command_encoder();
-    let context_texture_view = context.get_current_texture().create_view();
+    // frame animation
+    let scene_context = Mutex::new(scene::SceneContext::new());
+    let run_loop = animation::FrameRunLoop::new(global::window(), move || {
+        console_log!("draw");
+        // scene context
+        let Ok(mut scene_context) = scene_context.lock() else { return };
+        scene_context.forward_frame(1.0 / 60.0);
+        // frame
+        let command_encoder = device.create_command_encoder();
+        let context_texture_view = context.get_current_texture().create_view();
 
-    // render pass
-    let mut color_attachment = GpuRenderPassColorAttachment::new(
-        GpuLoadOp::Clear, GpuStoreOp::Discard, &texture_view);
-    let clear_color = GpuColorDict::new(1.0, 0.0, 0.0, 0.0);
-    let clear_color: JsValue = clear_color.into();
-    color_attachment.clear_value(&clear_color);
-    color_attachment.resolve_target(&context_texture_view);
-    let color_attachments: Vec<JsValue> = vec![
-        color_attachment.into(),
-    ];
-    let color_attachments = color_attachments.into_iter().collect::<js_sys::Array>();
-    let mut render_pass_descriptor = GpuRenderPassDescriptor::new(&color_attachments);
-    // depth stencil
-    let mut depth_stencil_attachment = GpuRenderPassDepthStencilAttachment::new(&depth_texture.create_view());
-    depth_stencil_attachment.depth_load_op(GpuLoadOp::Clear);
-    depth_stencil_attachment.depth_store_op(GpuStoreOp::Store);
-    depth_stencil_attachment.depth_clear_value(1.0);
-    render_pass_descriptor.depth_stencil_attachment(&depth_stencil_attachment);
-    // render pass encoder
-    let render_pass_encoder = command_encoder.begin_render_pass(&render_pass_descriptor);
-    render_pass_encoder.set_pipeline(&render_pipeline);
-    render_pass_encoder.set_vertex_buffer(0, &vertex_buffer);
-    render_pass_encoder.set_bind_group(0, &bind_group);
-    render_pass_encoder.draw(vertex_count as u32);
-    render_pass_encoder.end();
-    
-    // write
-    let queue = device.queue();
-    let aspect = (width as f64 / height as f64) as f32;
-    let fovy: f32 = 90.0;
-    let fovy = fovy.to_radians();
-    let perspective_matrix = glm::perspective(aspect, fovy, 0.01, 10.0);
-    let view_matrix = glm::translation(&glm::vec3(0.0,  0.0, -1.5));
-    let projection_view_matrix = perspective_matrix * view_matrix;
-    let uniform_data = js_sys::Float32Array::new_with_length(16);
-    uniform_data.copy_from(projection_view_matrix.as_slice());
-    queue.write_buffer_with_u32_and_buffer_source(&uniform_buffer, 0, &uniform_data);
+        // render pass
+        let mut color_attachment = GpuRenderPassColorAttachment::new(
+            GpuLoadOp::Clear, GpuStoreOp::Discard, &texture_view);
+        let clear_color = GpuColorDict::new(1.0, 0.0, 0.0, 0.0);
+        let clear_color: JsValue = clear_color.into();
+        color_attachment.clear_value(&clear_color);
+        color_attachment.resolve_target(&context_texture_view);
+        let color_attachments: Vec<JsValue> = vec![
+            color_attachment.into(),
+        ];
+        let color_attachments = color_attachments.into_iter().collect::<js_sys::Array>();
+        let mut render_pass_descriptor = GpuRenderPassDescriptor::new(&color_attachments);
+        // depth stencil
+        let mut depth_stencil_attachment = GpuRenderPassDepthStencilAttachment::new(&depth_texture.create_view());
+        depth_stencil_attachment.depth_load_op(GpuLoadOp::Clear);
+        depth_stencil_attachment.depth_store_op(GpuStoreOp::Store);
+        depth_stencil_attachment.depth_clear_value(1.0);
+        render_pass_descriptor.depth_stencil_attachment(&depth_stencil_attachment);
 
-    // submit
-    let command_buffer = command_encoder.finish();
-    let command_buffers:  Vec<JsValue> = vec![
-        command_buffer.into(),
-    ];
-    let command_buffers = command_buffers.into_iter().collect::<js_sys::Array>();
-    queue.submit(&command_buffers);
-    console_log!("draw");
+        // render pass encoder
+        let render_pass_encoder = command_encoder.begin_render_pass(&render_pass_descriptor);
+        render_pass_encoder.set_pipeline(&render_pipeline);
+        render_pass_encoder.set_vertex_buffer(0, &vertex_buffer);
+        render_pass_encoder.set_bind_group(0, &bind_group);
+        render_pass_encoder.draw(vertex_count as u32);
+        render_pass_encoder.end();
+        
+        // write
+        let queue = device.queue();
+        let aspect = (width as f64 / height as f64) as f32;
+        let fovy: f32 = 90.0;
+        let fovy = fovy.to_radians();
+        let perspective_matrix = glm::perspective(aspect, fovy, 0.001, 10.0);
+        let look_at_default = glm::look_at(&glm::vec3(0.25,  1.0, -1.5), &glm::vec3(0.0,  0.0, 0.0), &glm::vec3(0.0,  1.0, 0.0));
+        let view_matrix = look_at_default * glm::quat_to_mat4(&scene_context.view_quat());
+        let projection_view_matrix = perspective_matrix * view_matrix;
+        let uniform_data = js_sys::Float32Array::new_with_length(16);
+        uniform_data.copy_from(projection_view_matrix.as_slice());
+        queue.write_buffer_with_u32_and_buffer_source(&uniform_buffer, 0, &uniform_data);
+
+        // submit
+        let command_buffer = command_encoder.finish();
+        let command_buffers: Vec<JsValue> = vec![
+            command_buffer.into(),
+        ];
+        let command_buffers = command_buffers.into_iter().collect::<js_sys::Array>();
+        queue.submit(&command_buffers);
+    });
+    run_loop.run();
+    run_loop.forget();
     Ok(())
 }
 
