@@ -1,15 +1,41 @@
 
 use nalgebra_glm as glm;
 
+use std::sync::{Arc, Mutex};
+
 pub struct SceneContext {
-    view_quat: glm::Quat,
+    state: Mutex<SceneState>,
 }
 
 impl SceneContext {
+    pub fn new() -> Arc<SceneContext> {
+        let this = Self {
+            state: Mutex::new(SceneState::new()),
+        };
+        Arc::new(this)
+    }
+
+    pub fn forward_frame(&self, delta_time: f32) {
+        let Ok(mut state) = self.state.lock() else { return };
+        state.forward_frame(delta_time);
+    }
+
+    pub fn view_quat(&self) -> glm::Quat {
+        let Ok(state) = self.state.lock() else { return glm::quat_identity() };
+        state.view_quat()
+    }
+}
+
+struct SceneState {
+    view_quat: glm::Quat,
+}
+
+impl SceneState {
     pub fn new() -> Self {
-        Self {
-            view_quat: glm::quat_look_at(&glm::vec3(0.0, 0.0, 1.0), &glm::vec3(0.0, 1.0, 0.0)),
-        }
+        let this = Self {
+            view_quat: glm::quat_identity(),
+        };
+        this
     }
 
     pub fn view_quat(&self) -> glm::Quat {
