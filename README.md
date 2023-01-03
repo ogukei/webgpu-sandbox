@@ -2,6 +2,8 @@
 
 DEMO: https://ogukei.github.io/webgpu-sandbox/
 
+You will need Chrome version above 102 such as Canary builds to run WebGPU at the moment.
+
 ## Setup
 
 Install node via Volta if you don't have npm installed.
