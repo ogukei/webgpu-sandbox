@@ -47,6 +47,8 @@ module.exports = {
             patterns: [
                 { from: 'coi-serviceworker/coi-serviceworker.min.js', context: 'node_modules' },
                 { from: 'bulma/css/bulma.min.css', context: 'node_modules' },
+                { from: 'stanford_bunny.glb', context: 'models' },
+                { from: 'box.glb', context: 'models' },
             ]
         })
     ]

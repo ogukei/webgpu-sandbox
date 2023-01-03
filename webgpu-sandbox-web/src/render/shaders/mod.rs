@@ -1,8 +1,8 @@
 
 mod skybox;
-mod cube;
+mod common;
 
 pub struct Shaders {}
 
 pub use skybox::*;
-pub use cube::*;
+pub use common::*;

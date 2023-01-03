@@ -93,10 +93,8 @@ impl Surface {
         let window = &self.window;
         let canvas = &self.canvas;
         let device_pixel_ratio = window.device_pixel_ratio();
-        let width = canvas.client_width() as f64 * device_pixel_ratio;
-        let height = canvas.client_height() as f64 * device_pixel_ratio;
-        let presentation_size: Vec<JsValue> = vec![width, height].into_iter().map(Into::into).collect();
-        let presentation_size = presentation_size.into_iter().collect::<js_sys::Array>();
+        let width = (canvas.client_width() as f64 * device_pixel_ratio) as usize;
+        let height = (canvas.client_height() as f64 * device_pixel_ratio) as usize;
         // configure canvas size
         canvas.set_width(width as u32);
         canvas.set_height(height as u32);
@@ -116,15 +114,15 @@ impl Surface {
     }
 
     pub fn configuration(&self) -> SurfaceConfiguration {
-        let mut configuration = self.configuration.lock().unwrap();
+        let configuration = self.configuration.lock().unwrap();
         configuration.unwrap()
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct SurfaceConfiguration {
-    width: f64,
-    height: f64,
+    width: usize,
+    height: usize,
     presentation_format: GpuTextureFormat,
 }
 
@@ -134,16 +132,16 @@ impl SurfaceConfiguration {
     }
 
     pub fn presentation_size(&self) -> js_sys::Array {
-        let presentation_size: Vec<JsValue> = vec![self.width, self.height].into_iter().map(Into::into).collect();
+        let presentation_size: Vec<JsValue> = vec![self.width as f64, self.height as f64].into_iter().map(Into::into).collect();
         let presentation_size = presentation_size.into_iter().collect::<js_sys::Array>();
         presentation_size
     }
 
-    pub fn width(&self) -> f64 {
+    pub fn width(&self) -> usize {
         self.width
     }
 
-    pub fn height(&self) -> f64 {
+    pub fn height(&self) -> usize {
         self.height
     }
 }

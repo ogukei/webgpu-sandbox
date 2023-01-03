@@ -3,14 +3,20 @@ use nalgebra_glm as glm;
 
 use std::sync::{Arc, Mutex};
 
+use crate::{
+    Model,
+};
+
 pub struct SceneContext {
     state: Mutex<SceneState>,
+    model: Arc<Model>,
 }
 
 impl SceneContext {
-    pub fn new() -> Arc<SceneContext> {
+    pub fn new(model: &Arc<Model>) -> Arc<SceneContext> {
         let this = Self {
             state: Mutex::new(SceneState::new()),
+            model: Arc::clone(model),
         };
         Arc::new(this)
     }
@@ -23,6 +29,10 @@ impl SceneContext {
     pub fn view_quat(&self) -> glm::Quat {
         let Ok(state) = self.state.lock() else { return glm::quat_identity() };
         state.view_quat()
+    }
+
+    pub fn model(&self) -> &Arc<Model> {
+        &self.model
     }
 }
 

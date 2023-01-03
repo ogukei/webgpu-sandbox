@@ -5,11 +5,11 @@ mod animation;
 mod scene;
 mod render;
 mod renderer;
+mod fetch;
+mod asset;
 
-use std::sync::{Arc, Mutex};
-
-use wasm_bindgen::{prelude::*};
-use wasm_bindgen_futures::{spawn_local};
+use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen_futures::{spawn_local, JsFuture};
 
 use crate::render::{
     Device,
@@ -21,12 +21,17 @@ use crate::renderer::{
 use crate::scene::{
     SceneContext,
 };
+use crate::asset::Model;
 
 async fn main() -> Result<(), JsValue> {
+    console_log!("fetching model...");
+    let model = Model::fetch("stanford_bunny.glb").await?
+        .unwrap();
+    console_log!("fetch model complete");
     let device = Device::acquire().await?;
     let surface = Surface::acquire().await?;
     surface.configure(&device);
-    let scene_context = SceneContext::new();
+    let scene_context = SceneContext::new(&model);
     let renderer = Renderer::new(&device, &surface, &scene_context);
     let run_loop = animation::FrameRunLoop::new(global::window(), move || {
         renderer.render_frame();
