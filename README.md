@@ -34,22 +34,9 @@ npm run build
 
 ## Setup to Run
 
-You will need the Chrome above version 102. Once installed, it is required to configure Unsafe WebGPU feature enabled via `about:flags`.
-
-### macOS
-
-```
-brew tap homebrew/cask-versions
-brew install --cask google-chrome-dev
-```
-
-### Linux
+You will need the Chrome above version 102. 
 
 Download Chrome from [Dev channel](https://www.google.com/chrome/dev/?platform=linux&extra=devchannel).
-
-```
-sudo apt install <path-to>/google-chrome-unstable_current_amd64.deb
-```
 
 Make sure you have enabled the `Unsafe WebGPU` feature via `about:flags`.
 
