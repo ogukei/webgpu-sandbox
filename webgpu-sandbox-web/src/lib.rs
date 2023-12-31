@@ -25,7 +25,7 @@ use crate::asset::Model;
 
 async fn main() -> Result<(), JsValue> {
     console_log!("fetching model...");
-    let model = Model::fetch("stanford_bunny.glb").await?
+    let model = Model::fetch("dragon.glb").await?
         .unwrap();
     console_log!("fetch model complete");
     let device = Device::acquire().await?;

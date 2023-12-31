@@ -125,9 +125,7 @@ impl SkyboxRenderPipeline {
         render_descriptor.multisample(&multisample_state);
 
         // depth stencil
-        let mut depth_stencil_state = GpuDepthStencilState::new(GpuTextureFormat::Depth24plus);
-        depth_stencil_state.depth_write_enabled(true);
-        depth_stencil_state.depth_compare(GpuCompareFunction::Less);
+        let mut depth_stencil_state = GpuDepthStencilState::new(GpuCompareFunction::Less, true, GpuTextureFormat::Depth24plus);
         render_descriptor.depth_stencil(&depth_stencil_state);
 
         // render
@@ -176,8 +174,8 @@ impl SkyboxRenderPipeline {
             // render pass encoder
             let render_pass_encoder = command_encoder.begin_render_pass(&render_pass_descriptor);
             render_pass_encoder.set_pipeline(&render_pipeline);
-            render_pass_encoder.set_vertex_buffer(0, vertex_buffer.buffer());
-            render_pass_encoder.set_bind_group(0, &bind_group);
+            render_pass_encoder.set_vertex_buffer(0, Some(vertex_buffer.buffer()));
+            render_pass_encoder.set_bind_group(0, Some(&bind_group));
             render_pass_encoder.draw(vertex_buffer.vertex_count() as u32);
             render_pass_encoder.end();
             
@@ -281,9 +279,7 @@ impl FinalRenderPipeline {
         render_descriptor.multisample(&multisample_state);
 
         // depth stencil
-        let mut depth_stencil_state = GpuDepthStencilState::new(GpuTextureFormat::Depth24plus);
-        depth_stencil_state.depth_write_enabled(true);
-        depth_stencil_state.depth_compare(GpuCompareFunction::Less);
+        let mut depth_stencil_state = GpuDepthStencilState::new(GpuCompareFunction::Less, true, GpuTextureFormat::Depth24plus);
         render_descriptor.depth_stencil(&depth_stencil_state);
 
         // render
@@ -372,16 +368,16 @@ impl FinalRenderPipeline {
             // render pass encoder
             let render_pass_encoder = command_encoder.begin_render_pass(&render_pass_descriptor);
             render_pass_encoder.set_pipeline(&render_pipeline);
-            render_pass_encoder.set_bind_group(0, &bind_group);
+            render_pass_encoder.set_bind_group(0, Some(&bind_group));
             // nodes
             let nodes = model.nodes();
             for (local_index, node) in nodes.iter().enumerate() {
                 let Some(mesh_index) = node.mesh_index() else { continue };
                 let Some(mesh_buffer) = mesh_buffers.get(&mesh_index) else { continue };
                 let Some(secondary_bind_group) = secondary_bind_groups.get(local_index) else { continue };
-                render_pass_encoder.set_bind_group(1, &secondary_bind_group);
-                render_pass_encoder.set_vertex_buffer(0, mesh_buffer.position_buffer());
-                render_pass_encoder.set_vertex_buffer(1, mesh_buffer.normal_buffer());
+                render_pass_encoder.set_bind_group(1, Some(&secondary_bind_group));
+                render_pass_encoder.set_vertex_buffer(0, Some(mesh_buffer.position_buffer()));
+                render_pass_encoder.set_vertex_buffer(1, Some(mesh_buffer.normal_buffer()));
                 render_pass_encoder.set_index_buffer(mesh_buffer.index_buffer(), GpuIndexFormat::Uint32);
                 render_pass_encoder.draw_indexed(mesh_buffer.index_count() as u32);
             }

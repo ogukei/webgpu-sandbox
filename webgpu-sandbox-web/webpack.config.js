@@ -49,6 +49,7 @@ module.exports = {
                 { from: 'bulma/css/bulma.min.css', context: 'node_modules' },
                 { from: 'stanford_bunny.glb', context: 'models' },
                 { from: 'box.glb', context: 'models' },
+                { from: 'dragon.glb', context: 'models' },
             ]
         })
     ]

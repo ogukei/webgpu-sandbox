@@ -52,3 +52,9 @@ Rust Analyzer settings on VSCode settings.json
         "RUSTFLAGS": "--cfg=web_sys_unstable_apis"
     }
 ```
+
+## Models
+
+Stanford Bunny - [Stanford University Computer Graphics Laboratory](https://graphics.stanford.edu/data/3Dscanrep/), [McGuire Computer Graphics Archive](https://casual-effects.com/data/)
+
+Chinese Dragon - [Stanford University Computer Graphics Laboratory](https://graphics.stanford.edu/data/3Dscanrep/), [McGuire Computer Graphics Archive](https://casual-effects.com/data/)
