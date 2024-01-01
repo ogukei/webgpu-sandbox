@@ -1,6 +1,6 @@
 # WebGPU Sandbox
 
-DEMO: https://ogukei.github.io/webgpu-sandbox/
+DEMO: https://ogukei.github.io/webgpu-sandbox/?2024
 
 You will need Chrome version above 102 such as Canary builds to run WebGPU at the moment.
 
