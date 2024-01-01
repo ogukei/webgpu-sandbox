@@ -2,7 +2,9 @@
 
 DEMO: https://ogukei.github.io/webgpu-sandbox/?2024
 
-You will need Chrome version above 102 such as Canary builds to run WebGPU at the moment.
+You will need the Chrome version above 102 on the Windows/macOS environment. 
+
+Chrome on Linux is not currently supported since its WebGPU feature is disabled by default. In that case, you will need some experimental flags enabled such as `Unsafe WebGPU` feature via `about:flags`
 
 ## Setup
 
@@ -31,14 +33,6 @@ Install wasm-pack via https://rustwasm.github.io/wasm-pack/
 ```
 npm run build
 ```
-
-## Setup to Run
-
-You will need the Chrome above version 102. 
-
-Download Chrome from [Dev channel](https://www.google.com/chrome/dev/?platform=linux&extra=devchannel).
-
-Make sure you have enabled the `Unsafe WebGPU` feature via `about:flags`.
 
 ## Run
 ```
