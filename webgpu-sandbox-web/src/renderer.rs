@@ -471,7 +471,8 @@ impl RenderStage {
         if let Some(bounding_box) = model.bounding_box() {
             center = (bounding_box.max() + bounding_box.min()) * 0.5;
             let v = bounding_box.min();
-            eye = glm::vec3(center.x, (center.y + bounding_box.max().y) * 0.5, v.z * 3.0);
+            let distance = 2.0;
+            eye = glm::vec3(center.x, (center.y + bounding_box.max().y) * 0.5, v.z * distance);
         } else {
             eye = glm::vec3(0.25, 0.0, -0.0);
             center = glm::vec3(0.0,  0.0, 0.0);
